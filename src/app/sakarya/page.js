@@ -1,7 +1,7 @@
 import Image from "next/image";
 
 async function getPharmacies() {
-  const res = await fetch('http://localhost:3000/api/pharmacies/sakarya', {
+  const res = await fetch(`${NEXT_PUBLIC_API_URL}/api/pharmacies/sakarya`, {
     cache: 'no-store'
   });
   

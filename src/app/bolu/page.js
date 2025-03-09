@@ -3,20 +3,28 @@ import Image from "next/image";
 import { useState, useEffect } from 'react';
 
 async function getPharmacies() {
-  const res = await fetch('/api/pharmacies/bolu', {
-    cache: 'no-store'
-  });
-  
-  if (!res.ok) {
-    throw new Error('Failed to fetch pharmacies');
+  try {
+    const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/pharmacies/bolu`, {
+      cache: 'no-store'
+    });
+    
+    if (!res.ok) {
+      throw new Error('Failed to fetch pharmacies');
+    }
+    
+    const data = await res.json();
+    console.log('API Response:', data); // Debug için
+    return data;
+  } catch (error) {
+    console.error('Fetch error:', error, 'API URL:', process.env.NEXT_PUBLIC_API_URL);
+    throw error;
   }
-  
-  return res.json();
 }
 
 export default function BoluPage() {
   const [pharmacies, setPharmacies] = useState([]);
   const [showVideo, setShowVideo] = useState(false);
+  const [error, setError] = useState(null);
 
   // Function to check if current time is between 15:00-16:00
   const checkTimeAndUpdate = () => {
@@ -26,7 +34,15 @@ export default function BoluPage() {
   };
 
   useEffect(() => {
-    getPharmacies().then(data => setPharmacies(data.pharmacies));
+    getPharmacies()
+      .then(data => {
+        console.log('Fetched data:', data); // Debug için
+        setPharmacies(data.pharmacies);
+      })
+      .catch(err => {
+        console.error('Error in useEffect:', err);
+        setError(err.message);
+      });
 
     checkTimeAndUpdate();
 
@@ -45,6 +61,16 @@ export default function BoluPage() {
 
     return () => clearTimeout(initialTimeout);
   }, []);
+
+  if (error) {
+    return (
+      <div className="p-8 text-red-600">
+        <h2>Error loading pharmacies:</h2>
+        <p>{error}</p>
+        <p>API URL: {process.env.NEXT_PUBLIC_API_URL}</p>
+      </div>
+    );
+  }
 
   if (showVideo) {
     return (
