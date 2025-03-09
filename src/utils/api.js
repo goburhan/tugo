@@ -1,10 +1,8 @@
 const getApiUrl = () => {
-  const apiUrl = process.env.NEXT_PUBLIC_API_URL;
-  if (!apiUrl) {
-    console.warn('NEXT_PUBLIC_API_URL is not defined');
-    return 'http://localhost:3000'; // Fallback URL
+  if (typeof window !== 'undefined') {
+    return window.location.origin;
   }
-  return apiUrl;
+  return 'http://localhost:3001'; // Fallback for server-side
 };
 
 export const api = {
@@ -23,7 +21,7 @@ export const api = {
       
       return response.json();
     } catch (error) {
-      console.error('API Error:', error, 'Endpoint:', endpoint, 'URL:', getApiUrl());
+      console.error('API Error:', error, 'Endpoint:', endpoint);
       throw error;
     }
   },
@@ -44,7 +42,7 @@ export const api = {
       
       return response.json();
     } catch (error) {
-      console.error('API Error:', error, 'Endpoint:', endpoint, 'URL:', getApiUrl());
+      console.error('API Error:', error, 'Endpoint:', endpoint);
       throw error;
     }
   },
