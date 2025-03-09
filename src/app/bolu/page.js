@@ -33,21 +33,17 @@ export default async function BoluPage() {
 
   if (!showVideo) {
     return (
-      <div style={{display:"flex" , justifyContent:"center"}} className="fixed inset-0 w-full h-full bg-black">
+      <div >
         <video 
-          className="w-full h-full object-cover"
+          style={{width:"100vw",height:"100vh"}}
           autoPlay
           muted
           loop
-          playsInline
           controls={false}
         >
-          <source src="/videos/1.mp4" type="video/mp4" />
           <source src="/videos/2.webm" type="video/mp4" />
           desteklenmiyor
         </video>
-        <iframe width="2114" height="888" src="https://www.youtube.com/embed/vAqj83KQr3Y" title="VERY BEST CHAMPS to 6 STAR (Every Faction, Every Rarity)" frameBorder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerPolicy="strict-origin-when-cross-origin" allowFullScreen></iframe>
-
       </div>
     );
   }
