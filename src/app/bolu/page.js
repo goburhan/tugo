@@ -7,6 +7,7 @@ export default function BoluPage() {
   const [showVideo, setShowVideo] = useState(false);
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [test,setTest] = useState()
 
   const fetchPharmacies = async () => {
     try {
@@ -47,9 +48,10 @@ export default function BoluPage() {
   const checkTimeAndUpdate = () => {
     const now = new Date();
     const hours = now.getHours();
-    setShowVideo(hours >= 15 && hours < 16);
-  };
+    setTest(hours)
 
+    setShowVideo(hours >= 17 && hours < 18);
+  };
   useEffect(() => {
     console.log('Component mounted, starting fetch...');
     
@@ -86,18 +88,7 @@ export default function BoluPage() {
     return () => clearTimeout(initialTimeout);
   }, []);
 
-  if (loading) {
-    return (
-      <div className="p-8">
-        <h2>Loading pharmacies...</h2>
-        <p>Please wait while we fetch the data...</p>
-        <p className="text-sm text-gray-500">Debug info: {typeof window !== 'undefined' ? window.location.origin : 'Server rendering'}</p>
-      </div>
-    );
-  }
-
  
-
   if (showVideo) {
     return (
       <div className="fixed inset-0 w-full h-full bg-black">
@@ -118,6 +109,7 @@ export default function BoluPage() {
   return (
     <main className="p-8">
       <h1 className="text-2xl font-bold mb-6">Bolu Nöbetçi Eczaneler</h1>
+      time ={test}
       <div className="space-y-8">
         {pharmacies.map((pharmacy, index) => (
           <div key={pharmacy.id} className="border p-4 rounded-lg">
