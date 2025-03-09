@@ -2,21 +2,46 @@
 import Image from "next/image";
 import { useState, useEffect } from 'react';
 
-async function getPharmacies() {
-  const res = await fetch('/api/pharmacies/bolu', {
-    cache: 'no-store'
-  });
-  
-  if (!res.ok) {
-    throw new Error('Failed to fetch pharmacies');
-  }
-  
-  return res.json();
-}
-
 export default function BoluPage() {
   const [pharmacies, setPharmacies] = useState([]);
   const [showVideo, setShowVideo] = useState(false);
+  const [error, setError] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  const fetchPharmacies = async () => {
+    try {
+      // Tam URL oluştur
+      const baseUrl = process.env.NEXT_PUBLIC_VERCEL_URL 
+        ? `https://${process.env.NEXT_PUBLIC_VERCEL_URL}`
+        : process.env.NEXT_PUBLIC_API_URL 
+        ? process.env.NEXT_PUBLIC_API_URL
+        : window.location.origin;
+
+      console.log('Using base URL:', baseUrl);
+      
+      const res = await fetch(`${baseUrl}/api/pharmacies/bolu`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+      
+      console.log('Response status:', res.status);
+      
+      if (!res.ok) {
+        const errorText = await res.text();
+        console.error('Error response:', errorText);
+        throw new Error(`Failed to fetch pharmacies: ${res.status} ${errorText}`);
+      }
+      
+      const data = await res.json();
+      console.log('Received data:', data);
+      return data;
+    } catch (error) {
+      console.error('Fetch error:', error);
+      throw error;
+    }
+  };
 
   // Function to check if current time is between 15:00-16:00
   const checkTimeAndUpdate = () => {
@@ -26,7 +51,22 @@ export default function BoluPage() {
   };
 
   useEffect(() => {
-    getPharmacies().then(data => setPharmacies(data.pharmacies));
+    console.log('Component mounted, starting fetch...');
+    
+    fetchPharmacies()
+      .then(data => {
+        if (data && data.pharmacies) {
+          setPharmacies(data.pharmacies);
+        } else {
+          throw new Error('Invalid data format received');
+        }
+        setLoading(false);
+      })
+      .catch(err => {
+        console.error('Error in useEffect:', err);
+        setError(err.message);
+        setLoading(false);
+      });
 
     checkTimeAndUpdate();
 
@@ -45,6 +85,18 @@ export default function BoluPage() {
 
     return () => clearTimeout(initialTimeout);
   }, []);
+
+  if (loading) {
+    return (
+      <div className="p-8">
+        <h2>Loading pharmacies...</h2>
+        <p>Please wait while we fetch the data...</p>
+        <p className="text-sm text-gray-500">Debug info: {typeof window !== 'undefined' ? window.location.origin : 'Server rendering'}</p>
+      </div>
+    );
+  }
+
+ 
 
   if (showVideo) {
     return (
