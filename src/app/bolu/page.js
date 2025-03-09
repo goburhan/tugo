@@ -1,107 +1,53 @@
-'use client';
 import Image from "next/image";
-import { useState, useEffect } from 'react';
 
-export default function BoluPage() {
-  const [pharmacies, setPharmacies] = useState([]);
-  const [showVideo, setShowVideo] = useState(false);
-  const [error, setError] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [test,setTest] = useState()
+// Sayfayı static olarak render et
+export const dynamic = 'force-static'
+export const revalidate = 60 // her dakika yenile
 
-  const fetchPharmacies = async () => {
-    try {
-      // Tam URL oluştur
-      const baseUrl = process.env.NEXT_PUBLIC_VERCEL_URL 
-        ? `https://${process.env.NEXT_PUBLIC_VERCEL_URL}`
-        : process.env.NEXT_PUBLIC_API_URL 
-        ? process.env.NEXT_PUBLIC_API_URL
-        : window.location.origin;
-
-      console.log('Using base URL:', baseUrl);
-      
-      const res = await fetch(`${baseUrl}/api/pharmacies/bolu`, {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      });
-      
-      console.log('Response status:', res.status);
-      
-      if (!res.ok) {
-        const errorText = await res.text();
-        console.error('Error response:', errorText);
-        throw new Error(`Failed to fetch pharmacies: ${res.status} ${errorText}`);
-      }
-      
-      const data = await res.json();
-      console.log('Received data:', data);
-      return data;
-    } catch (error) {
-      console.error('Fetch error:', error);
-      throw error;
-    }
-  };
-
-  // Function to check if current time is between 15:00-16:00
-  const checkTimeAndUpdate = () => {
-    const now = new Date();
-    const hours = now.getHours();
-    setTest(hours)
-
-    setShowVideo(hours >= 17 && hours < 18);
-  };
-  useEffect(() => {
-    console.log('Component mounted, starting fetch...');
+async function getPharmacies() {
+  try {
+    const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000';
+    const res = await fetch(`${baseUrl}/api/pharmacies/bolu`, {
+      next: { revalidate: 60 }
+    });
     
-    fetchPharmacies()
-      .then(data => {
-        if (data && data.pharmacies) {
-          setPharmacies(data.pharmacies);
-        } else {
-          throw new Error('Invalid data format received');
-        }
-        setLoading(false);
-      })
-      .catch(err => {
-        console.error('Error in useEffect:', err);
-        setError(err.message);
-        setLoading(false);
-      });
+    if (!res.ok) {
+      throw new Error('Failed to fetch pharmacies');
+    }
+    
+    return res.json();
+  } catch (error) {
+    console.error('Fetch error:', error);
+    return { pharmacies: [] };
+  }
+}
 
-    checkTimeAndUpdate();
+export default async function BoluPage() {
+  const data = await getPharmacies();
+  const pharmacies = data.pharmacies || [];
+  
+  // Server-side saat kontrolü
+  const now = new Date();
+  const hours = now.getHours();
+  const showVideo = hours >= 15 && hours < 16;
 
-    const now = new Date();
-    const minutesToNextHour = 60 - now.getMinutes();
-    const secondsToNextHour = 60 - now.getSeconds();
-    const msToNextHour = (minutesToNextHour * 60 + secondsToNextHour) * 1000;
-
-    const initialTimeout = setTimeout(() => {
-      checkTimeAndUpdate();
-      
-      const hourlyInterval = setInterval(checkTimeAndUpdate, 3600000); 
-      
-      return () => clearInterval(hourlyInterval);
-    }, msToNextHour);
-
-    return () => clearTimeout(initialTimeout);
-  }, []);
-
- 
-  if (showVideo) {
+  if (!showVideo) {
     return (
-      <div className="fixed inset-0 w-full h-full bg-black">
+      <div style={{display:"flex" , justifyContent:"center"}} className="fixed inset-0 w-full h-full bg-black">
         <video 
           className="w-full h-full object-cover"
           autoPlay
           muted
           loop
           playsInline
+          controls={false}
         >
           <source src="/videos/1.mp4" type="video/mp4" />
-          Your browser does not support the video tag.
+          <source src="/videos/2.webm" type="video/mp4" />
+          desteklenmiyor
         </video>
+        <iframe width="2114" height="888" src="https://www.youtube.com/embed/vAqj83KQr3Y" title="VERY BEST CHAMPS to 6 STAR (Every Faction, Every Rarity)" frameBorder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerPolicy="strict-origin-when-cross-origin" allowFullScreen></iframe>
+
       </div>
     );
   }
@@ -109,10 +55,9 @@ export default function BoluPage() {
   return (
     <main className="p-8">
       <h1 className="text-2xl font-bold mb-6">Bolu Nöbetçi Eczaneler</h1>
-      time ={test}
       <div className="space-y-8">
         {pharmacies.map((pharmacy, index) => (
-          <div key={pharmacy.id} className="border p-4 rounded-lg">
+          <div key={pharmacy.id || index} className="border p-4 rounded-lg">
             <h2 className="text-xl font-bold mb-2">Eczane {index + 1}</h2>
             <p><strong>Eczane Adı:</strong> {pharmacy.name}</p>
             <p><strong>Telefon:</strong> {pharmacy.phone}</p>
